@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Recorder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3a0ca3;
+            --success: #2ecc71;
+            --danger: #e74c3c;
+            --dark: #121212;
+            --light: #f8f9fa;
+            --text-dark: #333333;
+            --text-light: #f8f9fa;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .dark-theme {
+            --primary: #6d83f2;
+            --secondary: #7678ed;
+            --dark: #f8f9fa;
+            --light: #121212;
+            --text-dark: #f8f9fa;
+            --text-light: #333333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--text-dark);
+            transition: var(--transition);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--box-shadow);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        .logo i {
+            font-size: 1.8rem;
+        }
+
+        .theme-toggle {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .source-selector {
+            background-color: var(--dark);
+            color: var(--text-light);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .source-selector h3 {
+            margin-bottom: 0.5rem;
+        }
+
+        .source-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .source-option {
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .source-option:hover,
+        .source-option.active {
+            border-color: var(--primary);
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+
+        .audio-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-wrapper input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-width: 150px;
+            transition: var(--transition);
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .timer {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            visibility: hidden;
+        }
+
+        .timer.active {
+            visibility: visible;
+        }
+
+        .timer i {
+            color: var(--danger);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .preview-section {
+            width: 100%;
+            max-width: 800px;
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .preview-section.active {
+            display: flex;
+        }
+
+        .preview-section h2 {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .video-container {
+            width: 100%;
+            background-color: #000;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16/9;
+            box-shadow: var(--box-shadow);
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .no-video-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .download-options {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .status-message.success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #c0392b;
+            display: block;
+        }
+
+        footer {
+            background-color: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            margin-top: 2rem;
+        }
+
+        .loading-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .loading-indicator.active {
+            display: flex;
+        }
+
+        .loading-indicator i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .source-options {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .source-option {
+                width: 100%;
+            }
+        }
+
+        /* PWA support */
+        .install-banner {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .install-banner.active {
+            display: flex;
+        }
+
+        .install-banner button {
+            background-color: white;
+            color: var(--primary);
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .install-banner .close-banner {
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-video"></i>
+            <span>Screen Recorder</span>
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+            <i class="fas fa-moon"></i>
+        </button>
+    </header>
+
+    <main>
+        <div id="statusMessage" class="status-message"></div>
+
+        <div class="controls">
+            <div class="source-selector">
+                <h3>Recording Source</h3>
+                <div class="source-options">
+                    <div class="source-option active" data-source="screen">
+                        <i class="fas fa-desktop"></i>
+                        <span>Entire Screen</span>
+                    </div>
+                    <div class="source-option" data-source="window">
+                        <i class="fas fa-window-maximize"></i>
+                        <span>Application Window</span>
+                    </div>
+                    <div class="source-option" data-source="tab">
+                        <i class="fas fa-browser"></i>
+                        <span>Browser Tab</span>
+                    </div>
+                </div>
+
+                <h3>Audio Options</h3>
+                <div class="audio-options">
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="microphoneAudio" checked>
+                        <label for="microphoneAudio">Microphone Audio</label>
+                    </div>
+                    <div class="checkbox-wrapper">
+                        <input type="checkbox" id="systemAudio">
+                        <label for="systemAudio">System Audio (if supported)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="timer" id="recordingTimer">
+                <i class="fas fa-circle"></i>
+                <span id="timerDisplay">00:00:00</span>
+            </div>
+
+            <div class="button-group">
+                <button id="startBtn" class="btn btn-primary">
+                    <i class="fas fa-play"></i>
+                    <span>Start Recording</span>
+                </button>
+                <button id="stopBtn" class="btn btn-danger" disabled>
+                    <i class="fas fa-stop"></i>
+                    <span>Stop Recording</span>
+                </button>
+            </div>
+
+            <div class="loading-indicator" id="loadingIndicator">
+                <i class="fas fa-spinner"></i>
+                <span>Processing recording...</span>
+            </div>
+        </div>
+
+        <div class="preview-section" id="previewSection">
+            <h2>Recording Preview</h2>
+            <div class="video-container">
+                <video id="previewVideo" controls></video>
+                <div class="no-video-placeholder" id="noVideoPlaceholder">
+                    <div>
+                        <i class="fas fa-film" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                        <p>Your recording will appear here</p>
+                    </div>
+                </div>
+            </div>
+            <div class="download-options">
+                <button id="downloadBtn" class="btn btn-success" disabled>
+                    <i class="fas fa-download"></i>
+                    <span>Download</span>
+                </button>
+                <button id="newRecordingBtn" class="btn btn-primary" disabled>
+                    <i class="fas fa-plus"></i>
+                    <span>New Recording</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div class="install-banner" id="installBanner">
+        <div>
+            <p>Install this app on your device for easier access</p>
+        </div>
+        <div>
+            <button id="installBtn">Install</button>
+            <button class="close-banner" id="closeBannerBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 Screen Recorder WebApp | Privacy-Focused</p>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const previewVideo = document.getElementById('previewVideo');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const newRecordingBtn = document.getElementById('newRecordingBtn');
+        const recordingTimer = document.getElementById('recordingTimer');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const previewSection = document.getElementById('previewSection');
+        const noVideoPlaceholder = document.getElementById('noVideoPlaceholder');
+        const microphoneAudio = document.getElementById('microphoneAudio');
+        const systemAudio = document.getElementById('systemAudio');
+        const sourceOptions = document.querySelectorAll('.source-option');
+        const statusMessage = document.getElementById('statusMessage');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const installBanner = document.getElementById('installBanner');
+        const installBtn = document.getElementById('installBtn');
+        const closeBannerBtn = document.getElementById('closeBannerBtn');
+
+        // State variables
+        let mediaRecorder;
+        let recordedChunks = [];
+        let recordingStream;
+        let timerInterval;
+        let startTime;
+        let deferredPrompt;
+
+        // Selected options state
+        let selectedSource = 'screen';
+        
+        // Initialize theme based on user preference
+        if (localStorage.getItem('theme') === 'dark' || 
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-theme');
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+
+        // Event Listeners
+        themeToggle.addEventListener('click', toggleTheme);
+        startBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+        downloadBtn.addEventListener('click', downloadRecording);
+        newRecordingBtn.addEventListener('click', resetRecorder);
+        closeBannerBtn.addEventListener('click', () => {
+            installBanner.classList.remove('active');
+            localStorage.setItem('pwaInstallDismissed', 'true');
+        });
+        installBtn.addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                });
+                installBanner.classList.remove('active');
+            }
+        });
+
+        // Toggle dark/light theme
+        function toggleTheme() {
+            if (document.body.classList.contains('dark-theme')) {
+                document.body.classList.remove('dark-theme');
+                themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.body.classList.add('dark-theme');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // Handle source selection
+        sourceOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                sourceOptions.forEach(o => o.classList.remove('active'));
+                option.classList.add('active');
+                selectedSource = option.dataset.source;
+            });
+        });
+
+        // Format timer display
+        function formatTime(milliseconds) {
+            let totalSeconds = Math.floor(milliseconds / 1000);
+            let hours = Math.floor(totalSeconds / 3600);
+            let minutes = Math.floor((totalSeconds % 3600) / 60);
+            let seconds = totalSeconds % 60;
+            
+            return [
+                hours.toString().padStart(2, '0'),
+                minutes.toString().padStart(2, '0'),
+                seconds.toString().padStart(2, '0')
+            ].join(':');
+        }
+
+        // Update timer display
+        function updateTimer() {
+            const elapsed = Date.now() - startTime;
+            timerDisplay.textContent = formatTime(elapsed);
+        }
+
+        // Start timer
+        function startTimer() {
+            startTime = Date.now();
+            recordingTimer.classList.add('active');
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+        }
+
+        // Stop timer
+        function stopTimer() {
+            clearInterval(timerInterval);
+            recordingTimer.classList.remove('active');
+        }
+
+        // Show status message
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message';
+            statusMessage.classList.add(type);
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                statusMessage.className = 'status-message';
+            }, 5000);
+        }
+
+        // Start recording
+        async function startRecording() {
+            recordedChunks = [];
+            const options = {
+                video: true
+            };
+            
+            try {
+                // Configure audio options
+                const audioConstraints = {};
+                
+                if (microphoneAudio.checked) {
+                    audioConstraints.microphone = true;
+                }
+                
+                if (systemAudio.checked) {
+                    audioConstraints.system = true;
+                }
+                
+                // Determine display media options based on source selection
+                const displayMediaOptions = {
+                    video: {
+                        cursor: 'always'
+                    },
+                    audio: systemAudio.checked
+                };
+                
+                if (selectedSource !== 'screen') {
+                    displayMediaOptions.video.displaySurface = selectedSource;
+                }
+                
+                // Request screen capture
+                recordingStream = await navigator.mediaDevices.getDisplayMedia(displayMediaOptions);
+                
+                // If microphone is selected, get microphone stream and combine
+                if (microphoneAudio.checked) {
+                    const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const tracks = [...recordingStream.getTracks(), ...micStream.getTracks()];
+                    recordingStream = new MediaStream(tracks);
+                }
+                
+                // Create media recorder
+                mediaRecorder = new MediaRecorder(recordingStream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = processRecording;
+                
+                // Start recording
+                mediaRecorder.start();
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                startTimer();
+                
+                // Listen for stream end (user might end sharing via browser UI)
+                recordingStream.getVideoTracks()[0].onended = () => {
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        stopRecording();
+                    }
+                };
+                
+                showStatus('Recording started! Click stop when finished.', 'success');
+                
+            } catch (error) {
+                console.error('Error starting recording:', error);
+                showStatus('Failed to start recording. ' + error.message, 'error');
+            }
+        }
+
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                stopTimer();
+                
+                // Stop all tracks
+                if (recordingStream) {
+                    recordingStream.getTracks().forEach(track => track.stop());
+                }
+                
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                loadingIndicator.classList.add('active');
+            }
+        }
+
+        // Process the recording after stopping
+        function processRecording() {
+            const blob = new Blob(recordedChunks, {
+                type: 'video/webm'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            previewVideo.src = url;
+            previewVideo.onloadedmetadata = () => {
+                noVideoPlaceholder.style.display = 'none';
+                loadingIndicator.classList.remove('active');
+            };
+            
+            downloadBtn.disabled = false;
+            newRecordingBtn.disabled = false;
+            previewSection.classList.add('active');
+            showStatus('Recording completed! You can now preview and download.', 'success');
+        }
+
+        // Download recording
+        function downloadRecording() {
+            if (recordedChunks.length === 0) {
+                showStatus('No recording available to download', 'error');
+                return;
+            }
+            
+            const blob = new Blob(recordedChunks, {
+                type: 'video/webm'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `screen-recording-${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.webm`;
+            document.body.appendChild(a);
+            a.click();
+            
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 100);
+            
+            showStatus('Recording downloaded successfully!', 'success');
+        }
+
+        // Reset recorder for a new recording
+        function resetRecorder() {
+            recordedChunks = [];
+            previewVideo.src = '';
+            noVideoPlaceholder.style.display = 'flex';
+            downloadBtn.disabled = true;
+            newRecordingBtn.disabled = true;
+            previewSection.classList.remove('active');
+        }
+
+        // Check browser compatibility on load
+        function checkBrowserCompatibility() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                showStatus('Your browser does not support screen recording. Please use Chrome, Edge, or Firefox.', 'error');
+                startBtn.disabled = true;
+            }
+        }
+
+        // PWA installation support
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent Chrome 67 and earlier from automatically showing the prompt
+            e.preventDefault();
+            // Stash the event so it can be triggered later
+            deferredPrompt = e;
+            
+            // Only show if not previously dismissed
+            if (!localStorage.getItem('pwaInstallDismissed')) {
+                installBanner.classList.add('active');
+            }
+        });
+
+        // When installed, hide the banner
+        window.addEventListener('appinstalled', () => {
+            installBanner.classList.remove('active');
+            deferredPrompt = null;
+        });
+
+        // Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            checkBrowserCompatibility();
+        });
+
+        // Add service worker registration for PWA support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
